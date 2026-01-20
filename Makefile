@@ -12,9 +12,6 @@ build:
 	@mkdir -p $(BUILD_DIR)
 	go build -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PKG)
 
-run:
-	go run $(MAIN_PKG)
-
 test:
 	go test ./...
 
@@ -28,10 +25,3 @@ test-coverage:
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -f coverage.out coverage.html
-
-
-help:
-	@echo "Usage: make [target]"
-	@echo ""
-	@echo "Targets:"
-	@sed -n 's/^##//p' $(MAKEFILE_LIST) | column -t -s ':' | sed 's/^/ /'
