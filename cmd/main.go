@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/c3-trentbuckholz/baseupgrader/pkg/git"
 	"github.com/spf13/cobra"
@@ -21,8 +22,8 @@ func NewCmd() *cobra.Command {
 			oldCommit, _ := cmd.Flags().GetString("oldCommit")
 			newCommit, _ := cmd.Flags().GetString("newCommit")
 
-			gitClientBase := git.NewGitClient(baseRepoUrl, authToken)
-			gitClientTarget := git.NewGitClient(targetRepoUrl, authToken)
+			gitClientBase := git.NewGitClient(baseRepoUrl, authToken, http.DefaultClient)
+			gitClientTarget := git.NewGitClient(targetRepoUrl, authToken, http.DefaultClient)
 
 			var (
 				errGroup    errgroup.Group

@@ -14,13 +14,17 @@ type Diff = map[string]string
 
 const GITHUB_API_URL = "https://api.github.com"
 
+type HttpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 type VcsClient interface {
 	GetDiff(oldCommit string, newCommit string) (Diff, error)
 	GetFiles(pattern string) ([]string, error)
 }
 
 type GitClient struct {
-	httpClient *http.Client
+	httpClient HttpClient
 	repoUrl    string
 	owner      string
 	repo       string
@@ -34,12 +38,12 @@ type getFileResponse struct {
 	Path string `json:"path"`
 }
 
-func NewGitClient(repoUrl string, authToken string) *GitClient {
+func NewGitClient(repoUrl string, authToken string, httpClient HttpClient) *GitClient {
 	parts := strings.Split(repoUrl, "/")
 	owner := parts[len(parts)-2]
 	repo := strings.TrimSuffix(parts[len(parts)-1], ".git")
 	return &GitClient{
-		httpClient: http.DefaultClient,
+		httpClient: httpClient,
 		repoUrl:    repoUrl,
 		owner:      owner,
 		repo:       repo,
@@ -53,11 +57,11 @@ func (g *GitClient) GetFiles(dirPath string) ([]string, error) {
 		GITHUB_API_URL, g.owner, g.repo)
 
 	req, err := http.NewRequest("GET", apiUrl, nil)
-	req.Header.Set("Accept", "application/vnd.github.v3.diff")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", g.authToken))
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("Accept", "application/vnd.github.v3.diff")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", g.authToken))
 
 	resp, err := g.httpClient.Do(req)
 	if err != nil {
@@ -135,6 +139,10 @@ func parseDiff(diffText string) Diff {
 		if currentFile != "" {
 			patchLines.WriteString(line + "\n")
 		}
+	}
+	// Save the last file's patch if exists.
+	if currentFile != "" {
+		diff[currentFile] = strings.TrimSuffix(patchLines.String(), "\n")
 	}
 	return diff
 }
