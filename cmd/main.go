@@ -70,7 +70,7 @@ func main() {
 			case Json:
 				reporter = report.NewJsonReport(targetFiles, baseDiff)
 			case Html:
-				log.Panic("HTML report not yet implemented")
+				reporter = report.NewHtmlReport(targetFiles, baseDiff)
 			default:
 				log.Panic("Unknown output type")
 			}

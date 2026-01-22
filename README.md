@@ -27,5 +27,5 @@ Run with `--help` to see all available options.
 
 ```bash
 bin/baseupgrader --baseRepoUrl="https://github.com/c3-e/c3pso" --oldCommit="2758cdb5f3fc5e854616ea9c83a8771137fffc5c" --newCommit="28bcf7ac5b81feac20e4e9d70a6e0658b75454b6" --targetR
-epoUrl="https://github.com/c3-e/c3fed-hii" --ghAuthToken="<GITHUB_AUTH_TOKEN>" --targetRepoPath=apps/nns/pso
+epoUrl="https://github.com/c3-e/c3fed-hii" --ghAuthToken="<GITHUB_AUTH_TOKEN>" --targetRepoPath=apps/nns/pso --outputType=html
 
