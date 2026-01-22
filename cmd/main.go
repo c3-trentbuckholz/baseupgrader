@@ -1,29 +1,47 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/c3-trentbuckholz/baseupgrader/pkg/git"
+	"github.com/c3-trentbuckholz/baseupgrader/pkg/report"
 	"github.com/spf13/cobra"
+	"github.com/thediveo/enumflag"
 	"golang.org/x/sync/errgroup"
 )
 
-func NewCmd() *cobra.Command {
-	return &cobra.Command{
+type OutputType enumflag.Flag
+
+const (
+	Basic OutputType = iota
+	Json
+	Html
+)
+
+var OutputTypeIds = map[OutputType][]string{
+	Basic: {"basic", "b"},
+	Json:  {"json", "j"},
+	Html:  {"html", "h"},
+}
+
+func main() {
+	var (
+		ghAuthToken    string
+		baseRepoUrl    string
+		targetRepoUrl  string
+		targetRepoPath string
+		oldCommit      string
+		newCommit      string
+		outputType     OutputType
+	)
+
+	rootCmd := &cobra.Command{
 		Use:   "baseupgrader",
 		Short: "Find the files to update during base app upgrades",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			authToken, _ := cmd.Flags().GetString("ghAuthToken")
-			baseRepoUrl, _ := cmd.Flags().GetString("baseRepoUrl")
-			targetRepoUrl, _ := cmd.Flags().GetString("targetRepoUrl")
-			targetRepoPath, _ := cmd.Flags().GetString("targetRepoPath")
-			oldCommit, _ := cmd.Flags().GetString("oldCommit")
-			newCommit, _ := cmd.Flags().GetString("newCommit")
-
-			gitClientBase := git.NewGitClient(baseRepoUrl, authToken, http.DefaultClient)
-			gitClientTarget := git.NewGitClient(targetRepoUrl, authToken, http.DefaultClient)
+			gitClientBase := git.NewGitClient(baseRepoUrl, ghAuthToken, http.DefaultClient)
+			gitClientTarget := git.NewGitClient(targetRepoUrl, ghAuthToken, http.DefaultClient)
 
 			var (
 				errGroup    errgroup.Group
@@ -44,31 +62,31 @@ func NewCmd() *cobra.Command {
 			if err := errGroup.Wait(); err != nil {
 				log.Panic(err)
 			}
-			for _, fileName := range targetFiles {
-				if _, ok := baseDiff[fileName]; ok {
-					fmt.Println(fileName)
-					fmt.Println("--------------------------------------------")
-					fmt.Println(baseDiff[fileName])
-					fmt.Println("============================================")
-				}
+
+			var reporter report.Reporter
+			switch outputType {
+			case Basic:
+				reporter = report.NewBasicReport(targetFiles, baseDiff)
+			case Json:
+				reporter = report.NewJsonReport(targetFiles, baseDiff)
+			case Html:
+				log.Panic("HTML report not yet implemented")
+			default:
+				log.Panic("Unknown output type")
+			}
+
+			reportContents, err := reporter.Create()
+			if err != nil {
+				log.Panic(err)
+			}
+			err = reporter.Write(reportContents)
+			if err != nil {
+				log.Panic(err)
 			}
 
 			return nil
 		},
 	}
-}
-
-func main() {
-	var (
-		ghAuthToken    string
-		baseRepoUrl    string
-		targetRepoUrl  string
-		targetRepoPath string
-		oldCommit      string
-		newCommit      string
-	)
-
-	rootCmd := NewCmd()
 
 	rootCmd.Flags().StringVar(&ghAuthToken, "ghAuthToken", "", "GitHub authentication token")
 	if err := rootCmd.MarkFlagRequired("ghAuthToken"); err != nil {
@@ -92,6 +110,11 @@ func main() {
 	if err := rootCmd.MarkFlagRequired("newCommit"); err != nil {
 		log.Panic(err)
 	}
+	rootCmd.Flags().Var(
+		enumflag.New(&outputType, "outputType", OutputTypeIds, enumflag.EnumCaseSensitive),
+		"outputType",
+		"Set the output type (available options: basic, json, html)",
+	)
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Panic(err)
