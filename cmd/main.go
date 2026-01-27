@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/c3-trentbuckholz/baseupgrader/pkg/git"
 	"github.com/c3-trentbuckholz/baseupgrader/pkg/report"
@@ -66,9 +67,9 @@ func main() {
 			var reporter report.Reporter
 			switch outputType {
 			case Basic:
-				reporter = report.NewBasicReport(targetFiles, baseDiff)
+				reporter = report.NewBasicReport(targetFiles, baseDiff, os.Stdout)
 			case Json:
-				reporter = report.NewJsonReport(targetFiles, baseDiff)
+				reporter = report.NewJsonReport(targetFiles, baseDiff, os.Stdout)
 			case Html:
 				reporter = report.NewHtmlReport(targetFiles, baseDiff)
 			default:

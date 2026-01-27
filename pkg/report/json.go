@@ -3,6 +3,7 @@ package report
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/c3-trentbuckholz/baseupgrader/pkg/git"
 )
@@ -10,12 +11,14 @@ import (
 type JsonReport struct {
 	files    []string
 	baseDiff git.Diff
+	writer   io.Writer
 }
 
-func NewJsonReport(files []string, baseDiff git.Diff) *JsonReport {
+func NewJsonReport(files []string, baseDiff git.Diff, writer io.Writer) *JsonReport {
 	return &JsonReport{
 		files:    files,
 		baseDiff: baseDiff,
+		writer:   writer,
 	}
 }
 
@@ -34,6 +37,6 @@ func (r *JsonReport) Create() (string, error) {
 }
 
 func (r *JsonReport) Write(contents string) error {
-	fmt.Println(contents)
-	return nil
+	_, err := fmt.Fprint(r.writer, contents)
+	return err
 }
