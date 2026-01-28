@@ -101,8 +101,8 @@ func main() {
 	if err := rootCmd.MarkFlagRequired("targetRepoUrl"); err != nil {
 		log.Panic(err)
 	}
-	rootCmd.Flags().StringVar(&targetRepoPath, "targetRepoPath", "",
-		"Path to directory in target repository")
+	rootCmd.Flags().StringVar(&targetRepoPath, "packagePath", "",
+		"Path to package directory in target repository (in the case of multiple projects in one repo)")
 	rootCmd.Flags().StringVar(&oldCommit, "oldCommit", "", "Old commit hash")
 	if err := rootCmd.MarkFlagRequired("oldCommit"); err != nil {
 		log.Panic(err)
